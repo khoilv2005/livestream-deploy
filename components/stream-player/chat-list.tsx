@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ReceivedChatMessage } from "@livekit/components-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatMessage } from "./chat-message";
 
 interface ChatListProps {
-  messages: ReceivedChatMessage[];
+  messages: { id: string; user: string; content: string; timestamp?: number }[];
   isHidden: boolean;
 }
 
@@ -35,7 +34,7 @@ export const ChatList = ({ messages, isHidden }: ChatListProps) => {
       className="flex flex-col overflow-y-auto h-[500px] p-3 space-y-2"
     >
       {messages.map((message) => (
-        <ChatMessage key={message.timestamp} data={message} />
+        <ChatMessage key={message.id} data={message} />
       ))}
     </div>
   );

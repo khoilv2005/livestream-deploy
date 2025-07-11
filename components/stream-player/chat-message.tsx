@@ -1,12 +1,11 @@
 "use client";
 
 import moment from "moment"
-import { ReceivedChatMessage } from "@livekit/components-react";
 import { format } from "date-fns";
 import { stringToColor } from "@/lib/utils";
 
 interface ChatMessageProps {
-  data: { user: string; content: string; timestamp?: number };
+  data: { id: string; user: string; content: string; timestamp?: number };
 }
 
 export const ChatMessage = ({ data }: ChatMessageProps) => {
