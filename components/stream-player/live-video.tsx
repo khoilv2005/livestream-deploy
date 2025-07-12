@@ -4,6 +4,7 @@ import {
   Participant,
   RemoteTrackPublication,
   RemoteVideoTrack,
+  RemoteAudioTrack,
   Track,
 } from "livekit-client";
 import { useEffect, useRef, useState } from "react";
@@ -41,7 +42,10 @@ export const LiveVideo = ({ participant }: LiveVideoProps) => {
 
   const handleToggleMute = () => {
     setMuted((prev) => !prev);
-    setVolume((prev) => (prev === 0 ? 100 : 0));
+    // Nếu đang muted và volume = 0, thì set volume về 100 khi unmute
+    if (muted && volume === 0) {
+      setVolume(100);
+    }
   };
 
   const toggleFullscreen = () => {
@@ -64,6 +68,10 @@ export const LiveVideo = ({ participant }: LiveVideoProps) => {
     (track) => track.participant.identity === participant.identity
   );
 
+  const audioTracks = useTracks([Track.Source.Microphone]).filter(
+    (track) => track.participant.identity === participant.identity
+  );
+
   useEffect(() => {
     const pub = videoTracks[0]?.publication as RemoteTrackPublication | undefined;
     const track = pub?.track;
@@ -83,6 +91,34 @@ export const LiveVideo = ({ participant }: LiveVideoProps) => {
     };
   }, [videoTracks]);
 
+  // Handle audio tracks
+  useEffect(() => {
+    const pub = audioTracks[0]?.publication as RemoteTrackPublication | undefined;
+    const track = pub?.track;
+
+    if (videoRef.current && track && track.kind === "audio") {
+      track.attach(videoRef.current);
+      console.log("Audio track attached");
+    }
+
+    return () => {
+      if (track && videoRef.current) {
+        track.detach(videoRef.current);
+        console.log("Audio track detached");
+      }
+    };
+  }, [audioTracks]);
+
+  // Ensure video plays when tracks are available
+  useEffect(() => {
+    if (videoRef.current && (videoTracks.length > 0 || audioTracks.length > 0)) {
+      videoRef.current.play().catch((error) => {
+        console.warn("Autoplay prevented:", error);
+        // Browser might require user interaction first
+      });
+    }
+  }, [videoTracks, audioTracks]);
+
   return (
     <div ref={wrapperRef} className="relative h-full flex">
       {/* Video stream */}
@@ -94,6 +130,13 @@ export const LiveVideo = ({ participant }: LiveVideoProps) => {
         autoPlay
         playsInline
         muted={muted}
+        controls={false}
+        onClick={() => {
+          // Handle user interaction to enable audio playback
+          if (videoRef.current) {
+            videoRef.current.play().catch(console.error);
+          }
+        }}
       />
 
       {/* Pause Overlay */}
